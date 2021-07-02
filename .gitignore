@@ -4,6 +4,7 @@ preprocessed_data/train/*
 preprocessed_data/test/wflw/*
 preprocessed_data/test/300w/*
 preprocessed_data/test/300w_selected/*
+output/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

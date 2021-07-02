@@ -1,4 +1,5 @@
 import os
+from ast import literal_eval
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -6,7 +7,7 @@ from tensorflow.keras import optimizers
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, Callback
 
-from model import create_landmarks_detector
+from model import create_landmarks_detector, CustomNME
 
 if __name__ == '__main__':
     gpus = tf.config.list_physical_devices('GPU')
@@ -22,7 +23,7 @@ if __name__ == '__main__':
     print(tf.config.list_physical_devices('GPU'))
 
     img_width, img_height = (224, 224)
-    batch_size = 64
+    batch_size = 128
 
     root_dir = os.path.dirname(os.path.realpath(__file__))
     train_data_dir = root_dir + '/preprocessed_data/train'
@@ -59,18 +60,16 @@ if __name__ == '__main__':
         class_mode = 'multi_output')
 
     model = create_landmarks_detector(input_shape = (img_width, img_height, 3))
-    model.compile(run_eagerly=True, optimizer=optimizers.Adam(learning_rate=1e-2),
+    model.compile(run_eagerly=True, optimizer=optimizers.Adam(learning_rate=1e-4),
                   metrics=[CustomNME(name='NME')])
     print(model.summary())
 
-    early_stop = EarlyStopping(monitor='val_loss', patience=8, verbose=1, min_delta=1e-5)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=4, verbose=1, min_delta=1e-4)
     model_checkpoint = ModelCheckpoint(
         filepath=root_dir + '/checkpoints/ckpt-{epoch:03d}',
         save_weights_only=True,
         monitor='val_loss',
         mode='max')
-    callbacks_list = [early_stop, reduce_lr]
+    callbacks_list = [model_checkpoint]
 
     model_history = model.fit(
         train_generator,

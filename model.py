@@ -53,7 +53,7 @@ class CustomModel(tf.keras.Model):
 
             y_pred_array = y_pred.numpy()
             y_angles_array = y_angles.numpy()
-            weights = [ custom_sample_wights(euler_angle_gt, landmarks)
+            weights = [ 100 * custom_sample_wights(euler_angle_gt, landmarks)
                             for euler_angle_gt, landmarks in zip(y_angles_array, y_pred_array)
             ]
             loss = self.mse_loss(y_landmarks, y_pred, sample_weight = weights)
@@ -87,7 +87,7 @@ class CustomModel(tf.keras.Model):
 
         return metrics 
 
-def create_landmarks_detector(input_shape = None, for_export = False):
+def create_landmarks_detector(input_shape = None):
     kernel = 5
     activation = hard_swish
     se_ratio = 0.25
@@ -142,10 +142,7 @@ def create_landmarks_detector(input_shape = None, for_export = False):
     concat = layers.concatenate([features_1, features_2, features_3], axis=1)
     output = layers.Dense(2*68)(concat)
 
-    if for_export:
-        model = tf.keras.Model(img_input, output, name='LandmarksDetector')
-    else:
-        model = CustomModel(img_input, output, name='LandmarksDetector')
+    model = CustomModel(img_input, output, name='LandmarksDetector')
     
     return model
 

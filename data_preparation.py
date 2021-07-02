@@ -152,6 +152,25 @@ class DataPreprocessor():
                 landmarks = np.asarray(landmarks, dtype=np.float32)
                 path = os.path.join(images_dir, line[206])
                 self.preprocess_image(path, landmarks, 5)
+    
+    def prepare_data_300w(self, images_dir):
+        for root, dirs, files in os.walk(images_dir, topdown=False):
+            for file in files:
+                if file.endswith('.png'):
+                    filename, _ = os.path.splitext(file)
+                    idx = int(filename[-1])
+                    if (self.is_train == bool(idx % 2)):
+                        annotation_file = filename + '.pts'
+                        landmarks = []
+                        with open(os.path.join(root, annotation_file),'r') as f:
+                            lines = f.readlines()
+                            for line in lines[3:71]:
+                                line = line.strip().split()
+                                landmarks.append(list(map(float, line)))
+                        landmarks = np.asarray(landmarks, dtype=np.float32)
+                        path = os.path.join(images_dir, root)
+                        path = os.path.join(path, file)
+                        self.preprocess_image(path, landmarks, 10)
 
 if __name__ == '__main__':
     root_dir = os.path.dirname(os.path.realpath(__file__))
@@ -173,12 +192,27 @@ if __name__ == '__main__':
 
     train_preprocessor = DataPreprocessor(train_data_dir, is_train = True)
     train_preprocessor.prepare_data_wflw(images_dir_wflw, train_annotation_files_wflw)
-    # prepare_data_300w(images_dir_300w, train_data_dir, is_train = True)
+    print('WFLW train set - Done')
+    train_preprocessor.prepare_data_300w(images_dir_300w)
+    print('300W train set - Done')
     train_preprocessor.save_annotations()
+    print('train annotations - Done')
 
     test_preprocessor = DataPreprocessor(test_data_dir_wflw, is_train = False)
     test_preprocessor.prepare_data_wflw(images_dir_wflw, test_annotation_files_wflw)
+    print('WFLW test set - Done')
     test_preprocessor.save_annotations()
-    # prepare_data_300w(images_dir_300w, test_data_dir_300W, is_train = False)
-    # prepare_data_300w(images_dir_300w, test_data_dir_300W_selected, is_train = False)
-    print('Done')
+    print('WFLW test annotations - Done')
+
+    test_preprocessor = DataPreprocessor(test_data_dir_300W, is_train = False)
+    test_preprocessor.prepare_data_300w(images_dir_300w)
+    print('300w full test set - Done')
+    test_preprocessor.save_annotations()
+    print('300w full test annotations - Done')
+
+    test_preprocessor = DataPreprocessor(test_data_dir_300W_selected, is_train = False)
+    test_preprocessor.prepare_data_300w(images_dir_300w)
+    print('300w selected test set - Done')
+    test_preprocessor.save_annotations()
+    print('300w selected annotations - Done')
+    print('All done')

@@ -46,4 +46,4 @@ def custom_sample_wights(euler_angle_gt, landmarks):
 
 def custom_nme(landmark_gt, landmarks):
     normalization_coeff = np.linalg.norm(landmark_gt[45] - landmark_gt[36])
-    return np.mean([np.linalg.norm(x) for x in (landmark_gt - landmarks)])
+    return np.mean([np.linalg.norm(x) / normalization_coeff for x in (landmark_gt - landmarks)])
