@@ -1,3 +1,10 @@
+data/*
+checkpoints/*
+preprocessed_data/train/*
+preprocessed_data/test/wflw/*
+preprocessed_data/test/300w/*
+preprocessed_data/test/300w_selected/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
