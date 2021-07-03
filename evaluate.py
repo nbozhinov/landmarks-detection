@@ -1,15 +1,21 @@
 import os
+import cv2
 from ast import literal_eval
+import shutil
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import optimizers
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import onnx
+import onnxruntime as onnxrt
+
+
 
 from utils import custom_nme
 from model import CustomModel, CustomNME
 
-def evaluate(test_data_dir, output_dir, model):
+def evaluate(test_data_dir, output_dir):
     annotations_df = pd.read_csv(test_data_dir + '/annotations.csv')
     annotations_df['path'] = annotations_df['path'].astype(str)
     annotations_df['landmarks'] = annotations_df['landmarks'].apply(lambda x: ','.join(x.split()))
@@ -22,8 +28,11 @@ def evaluate(test_data_dir, output_dir, model):
     annotations_df['angles'] = annotations_df['angles'].apply(literal_eval)
     annotations_df['angles'] = annotations_df['angles'].apply(np.array)
 
+    img_width, img_height = (224, 224)
+    batch_size = 64
+
     test_datagen = ImageDataGenerator()
-    test_generator = train_datagen.flow_from_dataframe(
+    test_generator = test_datagen.flow_from_dataframe(
         annotations_df,
         directory=test_data_dir,
         x_col = 'path', y_col = 'landmarks',
@@ -32,26 +41,37 @@ def evaluate(test_data_dir, output_dir, model):
         class_mode = 'raw')
 
     inference_times = []
-    inference_errors = []
+    nme_inter_pupil = []
+    nme_inter_ocular = []
 
+    onnxSess = onnxrt.InferenceSession("trained_model.onnx")
+    
+    save_image_ixd = 0
     for i in range(len(test_generator)):
         image_batch, landmarks_batch = next(test_generator)
-        pred = model.predict(image_batch)
-        true = true.reshape(-1, 2)
-        predicted = predicted.reshape(-1, 2)
-        inference_errors.extend([
-            custom_nme(true, predicted)
-                for true, predicted in zip(landmarks_batch, pred)])
-        for x, y in true:
-            coords = (img_width, img_height) * (x, y) + (0.5, 0.5)
-            coords = [int(c) for c in coords]
-            image = cv2.circle(image, coords, 2, (0, 255, 0))
-        for x, y in pred:
-            coords = (img_width, img_height) * (x, y) + (0.5, 0.5)
-            coords = [int(c) for c in coords]
-            image = cv2.circle(image, coords, 2, (0, 0, 255))
+        for image, landmarks in zip(image_batch, landmarks_batch):
+            predicted = onnxSess.run(None, {'input_1:0': image[np.newaxis]})[0]
+            landmarks = landmarks.reshape(-1, 2)
+            predicted = predicted.reshape(-1, 2)
 
-        cv2.imwrite(save_path, img)
+            inter_ocular, inter_pupil = custom_nme(landmarks, predicted)
+            nme_inter_ocular.append(inter_ocular)
+            nme_inter_pupil.append(inter_pupil)
+            
+            for x, y in landmarks:
+                coords = (img_width * x + 0.5, img_height * y + 0.5)
+                coords = [int(c) for c in coords]
+                image = cv2.circle(image, coords, 2, (0, 255, 0))
+            for x, y in predicted:
+                coords = (img_width * x + 0.5, img_height * y + 0.5)
+                coords = [int(c) for c in coords]
+                image = cv2.circle(image, coords, 2, (0, 0, 255))
+            save_path = os.path.join(output_dir, 'result ' + str(save_image_ixd) + '.png')
+            cv2.imwrite(save_path, image)
+            save_image_ixd = save_image_ixd + 1
+    
+    print("NME (inter-ocular) " + str(np.mean(nme_inter_ocular)))
+    print("NME (inter-pupil) " + str(np.mean(nme_inter_pupil)))
 
 if __name__ == '__main__':
     gpus = tf.config.list_physical_devices('GPU')
@@ -65,9 +85,6 @@ if __name__ == '__main__':
         except RuntimeError as e:
             print(e)
     print(tf.config.list_physical_devices('GPU'))
-
-    img_width, img_height = (224, 224)
-    batch_size = 64
 
     root_dir = os.path.dirname(os.path.realpath(__file__))
     test_data_dir = root_dir + '/preprocessed_data/test'
@@ -83,12 +100,12 @@ if __name__ == '__main__':
     for dir in [output_dir, output_dir_300w, output_dir_300w_selected, output_dir_wflw]:
         if os.path.exists(dir):
             shutil.rmtree(dir)
-            os.makedirs(dir)
+        os.makedirs(dir)
 
-    model = tf.keras.models.load_model(
-        'trained_model', custom_objects={"CustomModel": CustomModel, "CustomNME": CustomNME})
-
-    evaluate(test_data_dir_300w, output_dir_300w, model)
-    evaluate(test_data_dir_300w_selected, output_dir_300w_selected, model)
-    evaluate(test_data_dir_wflw, output_dir_wflw, model)
+    print('Evaluating on 300W:')
+    evaluate(test_data_dir_300w, output_dir_300w)
+    print('Evaluating on 300W (only images not used in training):')
+    evaluate(test_data_dir_300w_selected, output_dir_300w_selected)
+    print('Evaluating on WFLW:')
+    evaluate(test_data_dir_wflw, output_dir_wflw)
         

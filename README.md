@@ -21,17 +21,18 @@ output - папка с изображения резултат от тества
 Кода е разработван на Ubuntu 20.04, с използване на Docker контейнер nvcr.io/nvidia/tensorflow:21.05-tf2-py3 в който са налични основните използвани библиотеки  
 
 Версии на включените в контейнера библиотеки:  
-tensorrt==7.2.3.4  
-tensorflow==2.4 
-pandas==1.2.5  
-pycuda==2021.1  
-opencv-python==4.5.2.54  
-opencv-python-headless==4.5.2.54  
-onnx==1.9.0  
-onnx-simplifier==0.3.6  
-onnxconverter-common==1.8.1  
-onnxoptimizer==0.2.6  
-onnxruntime==1.8.0  
-matplotlib==3.4.2  
+matplotlib версия 3.4.2  
+onnx-simplifier версия 0.3.6  
+onnx версия 1.9.0  
+onnxconverter-common версия 1.8.1  
+onnxoptimizer версия 0.2.6  
+onnxruntime версия 1.8.0  
+opencv-python-headless версия 4.5.2.54  
+opencv-python версия 4.5.2.54  
+pandas версия 1.2.5  
+pycuda версия 2021.1  
+tensorflow версия 2.4  
+tensorrt версия 7.2.3.4  
+tf2onnx версия 1.8.5  
 
 За тестване на платформата Nvidia Jetson TX2 на нея е инсталиран пакета Nvidia JetPack 4.4 базиран на Ubuntu 18.04  

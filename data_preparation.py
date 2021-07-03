@@ -168,9 +168,8 @@ class DataPreprocessor():
                                 line = line.strip().split()
                                 landmarks.append(list(map(float, line)))
                         landmarks = np.asarray(landmarks, dtype=np.float32)
-                        path = os.path.join(images_dir, root)
-                        path = os.path.join(path, file)
-                        self.preprocess_image(path, landmarks, 10)
+                        path = os.path.join(images_dir, root, file)
+                        self.preprocess_image(path, landmarks, 20)
 
 if __name__ == '__main__':
     root_dir = os.path.dirname(os.path.realpath(__file__))

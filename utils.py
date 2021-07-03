@@ -42,8 +42,11 @@ def custom_sample_wights(euler_angle_gt, landmarks):
     angles = calculate_angles(landmarks.reshape(-1, 2))
     weight_angle = np.sum(1 - np.cos(angles - euler_angle_gt))
     
-    return weight_angle
+    return max(weight_angle, 0.1)
 
 def custom_nme(landmark_gt, landmarks):
-    normalization_coeff = np.linalg.norm(landmark_gt[45] - landmark_gt[36])
-    return np.mean([np.linalg.norm(x) / normalization_coeff for x in (landmark_gt - landmarks)])
+    normalization_coeff_ocular = np.linalg.norm(landmark_gt[45] - landmark_gt[36])
+    normalization_coeff_pupil = np.linalg.norm(
+        (landmark_gt[42] + landmark_gt[45]) / 2 - (landmark_gt[36] + landmark_gt[39]) / 2)
+    mean_distance = np.mean([np.linalg.norm(x) for x in (landmark_gt - landmarks)])
+    return mean_distance / normalization_coeff_ocular, mean_distance / normalization_coeff_pupil

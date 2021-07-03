@@ -4,7 +4,7 @@ from tensorflow.keras import optimizers
 from tensorflow.python.keras import backend, models, layers
 from tensorflow.python.keras.applications import imagenet_utils
 
-from utils import custom_sample_wights, custom_nme
+from utils import custom_sample_wights
 
 class CustomNME(tf.keras.metrics.Metric):
     def __init__(self, name=None, dtype=None):
@@ -121,7 +121,7 @@ def create_landmarks_detector(input_shape = None):
         name='Conv_1')(x)
     features_1 = layers.Flatten()(layers.GlobalAveragePooling2D()(x))
     x = layers.Conv2D(
-        32,
+        64,
         kernel_size=3,
         padding='same',
         use_bias=False,

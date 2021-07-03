@@ -3,6 +3,7 @@ from ast import literal_eval
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import tensorflow_addons as tfa
 from tensorflow.keras import optimizers
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, Callback
@@ -60,6 +61,7 @@ if __name__ == '__main__':
         class_mode = 'multi_output')
 
     model = create_landmarks_detector(input_shape = (img_width, img_height, 3))
+    adam_w = tfa.optimizers.AdamW(learning_rate=1e-4, weight_decay=1e-6)
     model.compile(run_eagerly=True, optimizer=optimizers.Adam(learning_rate=1e-4),
                   metrics=[CustomNME(name='NME')])
     print(model.summary())
