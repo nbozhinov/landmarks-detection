@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 import math
-
+import sklearn.metrics as metrics
+from matplotlib import pyplot as plt
 
 def calculate_angles(landmarks_2D, cam_w=256, cam_h=256):
     c_x = cam_w / 2
@@ -50,3 +51,21 @@ def custom_nme(landmark_gt, landmarks):
         (landmark_gt[42] + landmark_gt[45]) / 2 - (landmark_gt[36] + landmark_gt[39]) / 2)
     mean_distance = np.mean([np.linalg.norm(x) for x in (landmark_gt - landmarks)])
     return mean_distance / normalization_coeff_ocular, mean_distance / normalization_coeff_pupil
+
+def iterlen(iterable):
+    return sum(1 for _ in iterable)
+
+def calculate_and_plot_auc(errors_list, img_path):
+    x = []
+    y = []
+    total = len(errors_list)
+    for t in np.linspace(0, 1, 500, endpoint=True):
+        x.append(t)
+        y.append(iterlen(x for x in errors_list if x < t) / total)
+
+    plt.xlabel("Error threshold")
+    plt.ylabel("Fraction of all samples")
+    plt.plot(x, y)
+    plt.savefig(img_path)
+    plt.clf()
+    return metrics.auc(x, y)

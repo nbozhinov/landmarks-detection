@@ -2,6 +2,7 @@ import os
 import cv2
 from ast import literal_eval
 import shutil
+import time
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -10,10 +11,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import onnx
 import onnxruntime as onnxrt
 
-
-
-from utils import custom_nme
-from model import CustomModel, CustomNME
+from utils import custom_nme, calculate_and_plot_auc
 
 def evaluate(test_data_dir, output_dir):
     annotations_df = pd.read_csv(test_data_dir + '/annotations.csv')
@@ -41,8 +39,8 @@ def evaluate(test_data_dir, output_dir):
         class_mode = 'raw')
 
     inference_times = []
-    nme_inter_pupil = []
     nme_inter_ocular = []
+    nme_inter_pupil = []
 
     onnxSess = onnxrt.InferenceSession("trained_model.onnx")
     
@@ -50,7 +48,12 @@ def evaluate(test_data_dir, output_dir):
     for i in range(len(test_generator)):
         image_batch, landmarks_batch = next(test_generator)
         for image, landmarks in zip(image_batch, landmarks_batch):
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            local_start = time.perf_counter()
             predicted = onnxSess.run(None, {'input_1:0': image[np.newaxis]})[0]
+            local_end = time.perf_counter()
+            inference_times.append(local_end - local_start)
+
             landmarks = landmarks.reshape(-1, 2)
             predicted = predicted.reshape(-1, 2)
 
@@ -70,8 +73,15 @@ def evaluate(test_data_dir, output_dir):
             cv2.imwrite(save_path, image)
             save_image_ixd = save_image_ixd + 1
     
+    auc_inter_ocular = calculate_and_plot_auc(nme_inter_ocular, os.path.join(output_dir, 'auc_inter_ocular.png'))
     print("NME (inter-ocular) " + str(np.mean(nme_inter_ocular)))
+    print("AUC (inter-ocular) " + str(auc_inter_ocular))
+
+    auc_inter_pupil = calculate_and_plot_auc(nme_inter_pupil, os.path.join(output_dir, 'auc_inter_pupil.png'))
     print("NME (inter-pupil) " + str(np.mean(nme_inter_pupil)))
+    print("AUC (inter-pupil) " + str(auc_inter_pupil))
+
+    print("Mean inference time " + str(np.mean(inference_times)))
 
 if __name__ == '__main__':
     gpus = tf.config.list_physical_devices('GPU')

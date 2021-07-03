@@ -24,7 +24,7 @@ if __name__ == '__main__':
     print(tf.config.list_physical_devices('GPU'))
 
     img_width, img_height = (224, 224)
-    batch_size = 128
+    batch_size = 64
 
     root_dir = os.path.dirname(os.path.realpath(__file__))
     train_data_dir = root_dir + '/preprocessed_data/train'
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     model_history = model.fit(
         train_generator,
-        epochs=150,
+        epochs=300,
         validation_data=validation_generator,
         validation_steps=num_validation_samples // batch_size,
         callbacks=callbacks_list)
