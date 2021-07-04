@@ -62,8 +62,7 @@ if __name__ == '__main__':
 
     model = create_landmarks_detector(input_shape = (img_width, img_height, 3))
     adam_w = tfa.optimizers.AdamW(learning_rate=1e-4, weight_decay=1e-6)
-    model.compile(run_eagerly=True, optimizer=optimizers.Adam(learning_rate=1e-4),
-                  metrics=[CustomNME(name='NME')])
+    model.compile(run_eagerly=True, optimizer=adam_w, metrics=[CustomNME(name='NME')])
     print(model.summary())
 
     model_checkpoint = ModelCheckpoint(
