@@ -153,13 +153,13 @@ class DataPreprocessor():
                 path = os.path.join(images_dir, line[206])
                 self.preprocess_image(path, landmarks, 5)
     
-    def prepare_data_300w(self, images_dir):
+    def prepare_data_300w(self, images_dir, use_all = True):
         for root, dirs, files in os.walk(images_dir, topdown=False):
             for file in files:
                 if file.endswith('.png'):
                     filename, _ = os.path.splitext(file)
                     idx = int(filename[-1])
-                    if (self.is_train == bool(idx % 2)):
+                    if (use_all or self.is_train == bool(idx % 2)):
                         annotation_file = filename + '.pts'
                         landmarks = []
                         with open(os.path.join(root, annotation_file),'r') as f:
@@ -204,7 +204,7 @@ if __name__ == '__main__':
     print('WFLW test annotations - Done')
 
     test_preprocessor = DataPreprocessor(test_data_dir_300W, is_train = False)
-    test_preprocessor.prepare_data_300w(images_dir_300w)
+    test_preprocessor.prepare_data_300w(images_dir_300w, use_all = True)
     print('300w full test set - Done')
     test_preprocessor.save_annotations()
     print('300w full test annotations - Done')
